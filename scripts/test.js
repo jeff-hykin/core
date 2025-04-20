@@ -64,6 +64,7 @@ Coverage:
 	process.exit();
 }
 
+// options.verbose = true;
 if (options.quiet && options.verbose) {
 	console.error('ERROR: Can not specify --verbose and --quiet');
 	process.exit(1);
@@ -91,7 +92,7 @@ options.verbose && options.force && console.debug('Forcing tests to exit (--test
 if (options.build) {
 	!options.quiet && console.log('Building...');
 	try {
-		execSync('npm run build');
+		execSync('npm run build', { stdio: options.verbose  ? 'inherit' : 'ignore', });
 	} catch {
 		console.warn('Build failed, continuing without it.');
 	}
