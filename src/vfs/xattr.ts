@@ -2,7 +2,6 @@ import { Buffer } from 'node:buffer';
 import type { BufferEncodingOption, ObjectEncodingOptions } from 'node:fs';
 import type { V_Context } from '../context.js';
 import type { InodeLike } from '../internal/inode.js';
-import { Buffer } from 'buffer';
 import { rethrow, setUVMessage, UV } from 'kerium';
 import { pick } from 'utilium';
 import { Attributes, hasAccess } from '../internal/inode.js';
