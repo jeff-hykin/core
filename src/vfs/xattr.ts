@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import type { BufferEncodingOption, ObjectEncodingOptions } from 'node:fs';
 import type { V_Context } from '../context.js';
 import type { InodeLike } from '../internal/inode.js';

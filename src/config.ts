@@ -8,8 +8,9 @@ import { createCredentials } from './internal/credentials.js';
 import { DeviceFS } from './internal/devices.js';
 import { FileSystem } from './internal/filesystem.js';
 import { _setAccessChecks } from './vfs/config.js';
-import * as fs from './vfs/index.js';
+import * as defaultFs from './vfs/index.js';
 import { mounts } from './vfs/shared.js';
+import type { V_Context } from './internal/contexts.js';
 
 /**
  * Configuration for a specific mount point
@@ -64,10 +65,10 @@ export async function resolveMountConfig<T extends Backend>(configuration: Mount
 	}
 
 	checkOptions(backend, configuration);
-	const mount = (await backend.create(configuration)) as FilesystemOf<T>;
-	if (configuration.disableAsyncCache) mount.attributes.set('no_async_preload');
-	await mount.ready();
-	return mount;
+	const mountFs = (await backend.create(configuration)) as FilesystemOf<T>;
+	if (configuration.disableAsyncCache) mountFs.attributes.set('no_async');
+	await mountFs.ready();
+	return mountFs;
 }
 
 /**
@@ -134,7 +135,7 @@ export interface Configuration<T extends ConfigMounts> extends SharedConfig {
  * Configures ZenFS with single mount point /
  * @category Backends and Configuration
  */
-export async function configureSingle<T extends Backend>(configuration: MountConfiguration<T>): Promise<void> {
+export async function configureSingle<T extends Backend>(configuration: MountConfiguration<T>, fs=defaultFs): Promise<void> {
 	if (!isBackendConfig(configuration)) {
 		throw new TypeError('Invalid single mount point configuration');
 	}
@@ -150,9 +151,9 @@ export async function configureSingle<T extends Backend>(configuration: MountCon
  * This is implemented as a separate function to avoid a circular dependency between vfs/shared.ts and other vfs layer files.
  * @internal
  */
-async function mount(path: string, mount: FileSystem): Promise<void> {
+async function mountHelper(path: string, mountFs: FileSystem, fs=defaultFs): Promise<void> {
 	if (path == '/') {
-		fs.mount(path, mount);
+		fs.mount(path, mountFs);
 		return;
 	}
 
@@ -162,15 +163,16 @@ async function mount(path: string, mount: FileSystem): Promise<void> {
 	} else if (!stats.isDirectory()) {
 		throw withErrno('ENOTDIR', 'Missing directory at mount point: ' + path);
 	}
-	fs.mount(path, mount);
+	fs.mount(path, mountFs);
 }
 
 /**
  * @category Backends and Configuration
  */
-export function addDevice(driver: DeviceDriver, options?: object): Device {
-	const devfs = mounts.get('/dev');
-	if (!(devfs instanceof DeviceFS)) throw log.crit(withErrno('ENOTSUP', '/dev does not exist or is not a device file system'));
+export function addDevice(driver: DeviceDriver, options?: object, ctx?: V_Context): Device {
+    const mts = ctx?.mounts || mounts;
+	const devfs = mts.get('/dev');
+	if (!(devfs instanceof DeviceFS)) throw crit(new ErrnoError(Errno.ENOTSUP, '/dev does not exist or is not a device file system'));
 	return devfs._createDevice(driver, options);
 }
 
@@ -179,7 +181,7 @@ export function addDevice(driver: DeviceDriver, options?: object): Device {
  * @category Backends and Configuration
  * @see Configuration
  */
-export async function configure<T extends ConfigMounts>(configuration: Partial<Configuration<T>>): Promise<void> {
+export async function configure<T extends ConfigMounts>(configuration: Partial<Configuration<T>>, fs=defaultFs): Promise<void> {
 	const uid = 'uid' in configuration ? configuration.uid || 0 : 0;
 	const gid = 'gid' in configuration ? configuration.gid || 0 : 0;
 
@@ -200,7 +202,7 @@ export async function configure<T extends ConfigMounts>(configuration: Partial<C
 
 			if (point == '/') fs.umount('/');
 
-			await mount(point, await resolveMountConfig(mountConfig));
+			await mountHelper(point, await resolveMountConfig(mountConfig), fs);
 		}
 	}
 
@@ -208,6 +210,6 @@ export async function configure<T extends ConfigMounts>(configuration: Partial<C
 		const devfs = new DeviceFS();
 		devfs.addDefaults();
 		await devfs.ready();
-		await mount('/dev', devfs);
+		await mountHelper('/dev', devfs, fs);
 	}
 }

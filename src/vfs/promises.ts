@@ -10,9 +10,8 @@ import type { Interface as ReadlineInterface } from '../readline.js';
 import type { ResolvedPath } from './shared.js';
 import type { FileContents, GlobOptionsU, NullEnc, OpenOptions, ReaddirOptions, ReaddirOptsI, ReaddirOptsU } from './types.js';
 
-import { Buffer } from 'buffer';
-import { Exception, rethrow, setUVMessage, UV } from 'kerium';
-import { decodeUTF8, pick } from 'utilium';
+import { Buffer } from 'node:buffer';
+import { _throw, decodeUTF8, pick } from 'utilium';
 import { defaultContext } from '../internal/contexts.js';
 import { hasAccess, InodeFlags, isBlockDevice, isCharacterDevice, isDirectory, isSymbolicLink } from '../internal/inode.js';
 import { dirname, join, parse, resolve } from '../path.js';

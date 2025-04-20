@@ -4,8 +4,7 @@ import type { InodeLike } from '../internal/inode.js';
 import type { ResolvedPath } from './shared.js';
 import type { FileContents, GlobOptionsU, NullEnc, OpenOptions, ReaddirOptions, ReaddirOptsI, ReaddirOptsU } from './types.js';
 
-import { Buffer } from 'buffer';
-import { Errno, Exception, setUVMessage, UV } from 'kerium';
+import { Buffer } from 'node:buffer';
 import { decodeUTF8, encodeUTF8 } from 'utilium';
 import { defaultContext } from '../internal/contexts.js';
 import { wrap } from '../internal/error.js';

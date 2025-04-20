@@ -3,6 +3,8 @@ import { suite, test } from 'node:test';
 import { canary } from 'utilium';
 import { bindContext } from '../../dist/context.js';
 import * as fs from '../../dist/vfs/index.js';
+import { canary } from 'utilium';
+import { InMemory } from "../../dist/backends/memory.js"
 
 fs.mkdirSync('/ctx');
 const { fs: ctx } = bindContext({ root: '/ctx' });
@@ -57,5 +59,15 @@ suite('Context', () => {
 		assert.equal(lastFile, 'xpto.txt');
 		await watcher.return!();
 		await promise;
+	});
+	
+    test('isolated tree', async () => {
+        var { fs: fs1 } = bindContext({ root: '/', mounts: new Map([['/', InMemory.create({ label: 'root' })]]) })
+        var { fs: fs2 } = bindContext({ root: '/', mounts: new Map([['/', InMemory.create({ label: 'root' })]]) })
+
+        fs1.writeFileSync('/example.txt', 'fs1');
+        fs2.writeFileSync('/example.txt', 'fs2');
+        assert.equal(fs1.readFileSync('/example.txt', 'utf8'), 'fs1');
+        assert.throws(() => fs.readFileSync('/example.txt', 'utf8'));
 	});
 });
