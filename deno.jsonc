@@ -1,0 +1,10 @@
+{
+  "tasks": {
+    "clean": "deno run -A scripts/test.js --clean",
+    "build": "deno run -A scripts/test.js -abcfp",
+    "test": "tests/fetch/run.sh",
+    "report": "deno run -A scripts/test.js --report",
+    "c8": "deno run -A 'npm:c8'"
+  },
+  "nodeModulesDir": "auto"
+}
